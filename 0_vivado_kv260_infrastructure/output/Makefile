@@ -40,21 +40,21 @@ WORKSPACE_PATH := $(dir $(MAKEFILE_PATH))..
 
 # Source files
 
-SRC_PATH 			+= $(WORKSPACE_PATH)/rtl
+SRC_PATH 			= $(WORKSPACE_PATH)/rtl
 
 SRC_VHDL_FILES		+= $(SRC_PATH)/counter_wrapper.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
 SRC_VHDL08_FILES 	+= $(SRC_PATH)/utils_pkg.vhd
 SRC_VERILOG_FILES 	+= $(SRC_PATH)/counter.v
 INC_VERILOG_FILES	+= $(SRC_PATH)/utils.v
 
-SRC_ALL_FILES    	+= $(SRC_VHDL_FILES) $(SRC_VHDL08_FILES) $(SRC_VERILOG_FILES) $(INC_VERILOG_FILES)
+SRC_ALL_FILES    	= $(SRC_VHDL_FILES) $(SRC_VHDL08_FILES) $(SRC_VERILOG_FILES) $(INC_VERILOG_FILES)
 
 # Constraints
-XDC_FILES 			+= $(WORKSPACE_PATH)/constraints/kv260.xdc
+XDC_FILES 			= $(WORKSPACE_PATH)/constraints/kv260.xdc
 
 # IPs
-IP_TCL_FILES 		+= $(WORKSPACE_PATH)/ips/platform.tcl
-# IP_XCI_FILES 		+= 
+IP_TCL_FILES 		= $(WORKSPACE_PATH)/ips/platform.tcl
+# IP_XCI_FILES 		= 
 
 # Misc
 

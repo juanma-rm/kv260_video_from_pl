@@ -1,0 +1,6 @@
+/__pycache__
+/sim_build
+.pytest_cache
+results.xml
+transcript
+vsim.wlf
