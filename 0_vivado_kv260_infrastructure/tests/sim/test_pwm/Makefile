@@ -28,7 +28,7 @@ COCOTB_HDL_TIMEPRECISION = 1ps
 # DUT and sources
 #############################################################
 
-DUT      = counter_wrapper
+DUT      = pwm
 TOPLEVEL = $(DUT)
 MODULE  := test_$(DUT)
 
@@ -38,8 +38,6 @@ SRC_PATH := $(WORKSPACE_PATH)/rtl
 
 VHDL_SOURCES			+= $(SRC_PATH)/$(DUT).vhd
 VHDL_SOURCES			+= $(SRC_PATH)/utils_pkg.vhd
-VERILOG_SOURCES 		+= $(SRC_PATH)/counter.v
-VERILOG_INCLUDE_DIRS	+= $(SRC_PATH)/utils.v
 
 # To simulate several VHDL libraries other than work:
 # VHDL_SOURCES_lib1		+= 
