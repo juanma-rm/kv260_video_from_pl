@@ -31,13 +31,16 @@ SYN_NUM_JOBS = 12
 # EXTENSIBLE_PLATFORM = true for extensible platform or false for standard platform (including bitstream, for baremetal workflow with Vitis)
 EXTENSIBLE_PLATFORM = false
 
+MAKEFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
+WORKSPACE_PATH := $(dir $(MAKEFILE_PATH))..
+
 #############################################################
 # Input files
 #############################################################
 
 # Source files
 
-SRC_PATH 			+= ../rtl
+SRC_PATH 			+= $(WORKSPACE_PATH)/rtl
 
 SRC_VHDL_FILES		+= $(SRC_PATH)/counter_wrapper.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
 SRC_VHDL08_FILES 	+= $(SRC_PATH)/utils_pkg.vhd
@@ -47,10 +50,10 @@ INC_VERILOG_FILES	+= $(SRC_PATH)/utils.v
 SRC_ALL_FILES    	+= $(SRC_VHDL_FILES) $(SRC_VHDL08_FILES) $(SRC_VERILOG_FILES) $(INC_VERILOG_FILES)
 
 # Constraints
-XDC_FILES 			+= ../constraints/kv260.xdc
+XDC_FILES 			+= $(WORKSPACE_PATH)/constraints/kv260.xdc
 
 # IPs
-IP_TCL_FILES 		+= ../ips/platform.tcl
+IP_TCL_FILES 		+= $(WORKSPACE_PATH)/ips/platform.tcl
 # IP_XCI_FILES 		+= 
 
 # Misc
@@ -59,29 +62,28 @@ IP_TCL_FILES 		+= ../ips/platform.tcl
 # Main Targets
 ###################################################################
 
-# Note: all targets are executed from within PATH_VIVADO_PROJECT folder, where the Vivado project will be generated
-PATH_VIVADO_PROJECT = ../vivado # Warning! This folder will be removed each time make clean is done; careful with making this variable point to any folder containing important data
-MAKEFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
+# Note: all targets are executed from within VIVADO_OUT_PATH folder, where the Vivado project will be generated
+VIVADO_OUT_PATH := $(WORKSPACE_PATH)/output/vivado # Warning! This folder will be removed each time make clean is done; careful with making this variable point to any folder containing important data
 
 all: xsa
 
 create_path:
-	mkdir -p $(PATH_VIVADO_PROJECT)
+	mkdir -p $(VIVADO_OUT_PATH)
 
 vivado: create_path
-	$(MAKE) -C $(PATH_VIVADO_PROJECT) -f $(MAKEFILE_PATH) vivado_gui
+	$(MAKE) -C $(VIVADO_OUT_PATH) -f $(MAKEFILE_PATH) vivado_gui
 
 bit: create_path
-	$(MAKE) -C $(PATH_VIVADO_PROJECT) -f $(MAKEFILE_PATH) $(PROJECT_NAME).bit
+	$(MAKE) -C $(VIVADO_OUT_PATH) -f $(MAKEFILE_PATH) $(PROJECT_NAME).bit
 
 xsa: create_path
-	$(MAKE) -C $(PATH_VIVADO_PROJECT) -f $(MAKEFILE_PATH) $(PROJECT_NAME).xsa
+	$(MAKE) -C $(VIVADO_OUT_PATH) -f $(MAKEFILE_PATH) $(PROJECT_NAME).xsa
 
 program: create_path
-	$(MAKE) -C $(PATH_VIVADO_PROJECT) -f $(MAKEFILE_PATH) program_hw
+	$(MAKE) -C $(VIVADO_OUT_PATH) -f $(MAKEFILE_PATH) program_hw
 
 clean:
-	rm -rf $(PATH_VIVADO_PROJECT)
+	rm -rf $(VIVADO_OUT_PATH)
 
 .PHONY: all vivado bit clean
 
