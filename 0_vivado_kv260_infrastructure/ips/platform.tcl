@@ -13,6 +13,10 @@ set PROJECT_NAME kv260_infrastructure
 set BD_TOP bd_top
 set EXTENSIBLE_PLATFORM false
 
+# Select FAN_CONTROL value among the following options
+set fan_control_type {ttc0_linux counter_fpga default}
+set FAN_CONTROL "counter_fpga"
+
 ##############################################################################
 # Main block design based on ZUS+ MPSoC + Reset
 ##############################################################################
@@ -45,20 +49,55 @@ connect_bd_net $pl_resetn0 [get_bd_pins $proc_sys_reset/ext_reset_in]
 set peripheral_reset [get_bd_pins $proc_sys_reset/peripheral_reset]
 
 ##############################################################################
-# Fan control (from PS TTC0 EMIO waveout)
+# Fan control
 ##############################################################################
 
-# Add slice IP and configure to take bit 2 from a 3-bit wide input
-set xlslice_fan [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_fan ]
-set_property    CONFIG.DIN_TO {2}                       $xlslice_fan
-set_property    CONFIG.DIN_FROM {2}                     $xlslice_fan
-set_property    CONFIG.DIN_WIDTH {3}                    $xlslice_fan
-set_property    CONFIG.DOUT_WIDTH {1}                   $xlslice_fan
+if {[lsearch -exact $fan_control_type $FAN_CONTROL] == -1} {
+    puts "Error: FAN_CONTROL must be one of {ttc0_linux counter_fpga default}"
+    exit 1
+}
 
-# Connect slice output to fan_en_b output port and slice input to ttc0 emio
-create_bd_port -dir O -from 0 -to 0 fan_en_b
-connect_bd_net [get_bd_pins /xlslice_fan/Dout] [get_bd_ports fan_en_b]
-connect_bd_net [get_bd_pins $zynq_ultra_ps/emio_ttc0_wave_o] [get_bd_pins xlslice_fan/Din]
+if {$FAN_CONTROL eq "ttc0_linux"} {
+    
+    # Fan control from PS TTC0 EMIO waveout
+
+    # Add slice IP and configure to take bit 2 from a 3-bit wide input
+    set xlslice_fan [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_fan ]
+    set_property    CONFIG.DIN_TO {2}                       $xlslice_fan
+    set_property    CONFIG.DIN_FROM {2}                     $xlslice_fan
+    set_property    CONFIG.DIN_WIDTH {3}                    $xlslice_fan
+    set_property    CONFIG.DOUT_WIDTH {1}                   $xlslice_fan
+
+    # Connect slice output to fan_en_b output port and slice input to ttc0 emio
+    create_bd_port -dir O -from 0 -to 0 fan_en_b
+    connect_bd_net [get_bd_pins /xlslice_fan/Dout] [get_bd_ports fan_en_b]
+    connect_bd_net [get_bd_pins $zynq_ultra_ps/emio_ttc0_wave_o] [get_bd_pins xlslice_fan/Din]
+
+} elseif {$FAN_CONTROL eq "counter_fpga"} {
+
+    # Fan control from FPGA pwm module
+
+    set pwm [ create_bd_cell -type module -reference pwm pwm_inst ]
+
+    connect_bd_net [get_bd_pins pwm_inst/clk_i]  [get_bd_pins $pl_clk0]
+    connect_bd_net [get_bd_pins pwm_inst/rst_i]  [get_bd_pins $peripheral_reset]
+
+    # fan_en_b works with negative logic, for what a not gate is used
+    create_bd_port -dir O -from 0 -to 0 fan_en_b
+    create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0
+    set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] [get_bd_cells util_vector_logic_0]
+    connect_bd_net [get_bd_pins pwm_inst/pwm_o] [get_bd_pins util_vector_logic_0/Op1]
+    connect_bd_net [get_bd_ports fan_en_b]      [get_bd_pins util_vector_logic_0/Res]
+
+    # duty_cycle_in driven by 7-bit constant set at 20 (duty cycle = 20%)
+    create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0
+    set_property -dict [list CONFIG.CONST_WIDTH {7} CONFIG.CONST_VAL {20}] [get_bd_cells xlconstant_0]
+    connect_bd_net [get_bd_pins xlconstant_0/dout] [get_bd_pins pwm_inst/duty_cycle_in]
+
+} elseif {[lsearch -exact $fan_control_type $FAN_CONTROL] == -1} {
+    puts "Error: FAN_CONTROL must be one of {ttc0_linux counter_fpga default}"
+    exit 1
+}
 
 ##############################################################################
 # counter_wrapper

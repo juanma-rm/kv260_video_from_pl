@@ -43,6 +43,7 @@ WORKSPACE_PATH := $(dir $(MAKEFILE_PATH))..
 SRC_PATH 			= $(WORKSPACE_PATH)/rtl
 
 SRC_VHDL_FILES		+= $(SRC_PATH)/counter_wrapper.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
+SRC_VHDL_FILES		+= $(SRC_PATH)/pwm.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
 SRC_VHDL08_FILES 	+= $(SRC_PATH)/utils_pkg.vhd
 SRC_VERILOG_FILES 	+= $(SRC_PATH)/counter.v
 INC_VERILOG_FILES	+= $(SRC_PATH)/utils.v
