@@ -61,21 +61,28 @@ async def run_test_pwm(dut):
 
     # Initialize TB
     tb = TB(dut)
+    tb.dut.duty_cycle_in.value = 0
     await tb.init()
     
     # Test several duty cycles  
     tb.dut.duty_cycle_in.value = 0
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(90): await RisingEdge(tb.dut.clk_pwm)
     tb.dut.duty_cycle_in.value = 1
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(100): await RisingEdge(tb.dut.clk_pwm)
     tb.dut.duty_cycle_in.value = 50
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(100): await RisingEdge(tb.dut.clk_pwm)
     tb.dut.duty_cycle_in.value = 99
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(100): await RisingEdge(tb.dut.clk_pwm)
     tb.dut.duty_cycle_in.value = 100
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(100): await RisingEdge(tb.dut.clk_pwm)
     tb.dut.duty_cycle_in.value = 0
-    for _ in range(100): await RisingEdge(dut.clk_pwm)
+    for _ in range(100): await RisingEdge(tb.dut.clk_pwm)
+    
+    # If reset goes high, pwm_o should remain high
+    for _ in range(200): await RisingEdge(tb.dut.clk_i)
+    tb.dut.rst_i.value = 1
+    for _ in range(200): await RisingEdge(tb.dut.clk_i)
+    tb.dut.rst_i.value = 0
 
     
     for _ in range(20): await RisingEdge(dut.clk_pwm)
