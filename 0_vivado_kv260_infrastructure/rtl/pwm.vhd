@@ -39,7 +39,7 @@ entity pwm is
     port (
         clk_i           : in  std_logic;
         rst_i           : in  std_logic;
-        duty_cycle_in   : in  natural := 50;
+        duty_cycle_in   : in  unsigned(6 downto 0);
         pwm_o           : out std_logic
     );
 end pwm;
@@ -53,7 +53,7 @@ architecture behavioral of pwm is
     signal count_in_freq : unsigned(log2_ceil(divider) downto 0);
     signal clk_pwm : std_logic;
     signal count_pwm_freq : unsigned(log2_ceil(100) downto 0);
-    signal duty_cycle_reg : natural;
+    signal duty_cycle_reg : unsigned(6 downto 0);
     signal pwm_period_start : std_logic; -- For debug purpose
 
 begin
