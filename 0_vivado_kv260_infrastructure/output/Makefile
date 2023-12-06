@@ -12,7 +12,7 @@
 # source /opt/Xilinx/Vivado/2022.1/settings64.sh
 
 # Makefile usage:
-# make all: build Vivado project, synthesise, implement and generate bitstream
+# make all: build Vivado project, synthesise, implement and generate bitstream and xsa files
 # make vivado: build Vivado project and open Vivado GUI
 # make program: program the FPGA
 # make clean: remove output files and project files
