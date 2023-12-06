@@ -15,6 +15,7 @@
 --
 -- Outputs:
 --   - pwm_o
+--      - goes high during reset
 ----------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------
@@ -68,27 +69,27 @@ begin
         end if;
     end process;
 
-    clk_pwm <= '0' when (count_in_freq < divider / 2) else '1';
+    clk_pwm <= '1' when (count_in_freq < divider / 2) else '0';
 
-    count_pwm_proc: process(clk_pwm)
+    count_pwm_proc: process(clk_pwm, rst_i)
     begin
-        if rising_edge(clk_pwm) then
-            if    (rst_i = '1')         then count_pwm_freq <= (others => '0'); 
-            elsif (count_pwm_freq < 99) then count_pwm_freq <= count_pwm_freq + 1;
-            else                             count_pwm_freq <= (others => '0');
+        if (rst_i = '1')             then count_pwm_freq <= (others => '0');
+        elsif rising_edge(clk_pwm)   then         
+            if (count_pwm_freq < 99) then count_pwm_freq <= count_pwm_freq + 1;
+            else                          count_pwm_freq <= (others => '0');
             end if;
         end if;
     end process;
 
-    duty_cycle_reg_proc: process(clk_pwm)
+    duty_cycle_reg_proc: process(clk_i)
     begin
-        if rising_edge(clk_pwm) then
-            if (rst_i = '1' or count_pwm_freq = 99) then duty_cycle_reg <= duty_cycle_in; end if;
+        if rising_edge(clk_i) then
+            if (rst_i = '1' or count_pwm_freq = 0) then duty_cycle_reg <= duty_cycle_in; end if;
         end if;
     end process;
     
 
     pwm_period_start <= '1' when (count_pwm_freq = 0) else '0';
-    pwm_o <= '1' when (count_pwm_freq < duty_cycle_reg) else '0';
+    pwm_o <= '1' when (rst_i = '1' or count_pwm_freq < duty_cycle_reg) else '0';
 
 end behavioral;
