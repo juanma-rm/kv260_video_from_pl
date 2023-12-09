@@ -8,7 +8,7 @@
     <li><a href="#Contact">Contact</a></li>
 </ol>
 
-## About the project <a name="About-The-Project"></a>
+## About the project <a id="About-The-Project"></a>
 
 The target of this project is to serve as a **baseline for working with AMD KV260** or similar platforms from a **Vivado workflow** perspective. It sets up an infrastructure which consists of the following items:
 
@@ -20,13 +20,13 @@ In general, the purpose is simply to provide a baseline to work with KV260 platf
 
 <img src="pics/bd_top.png" alt="drawing">
 
-## Prerequisites <a name="Prerequisites"></a>
+## Prerequisites <a id="Prerequisites"></a>
 
 - [AMD Vivado Design Suite](https://www.xilinx.com/products/design-tools/vivado.html) for generating the project, the output artefacts, programming the FPGA, etc.
 - [cocotb](https://www.cocotb.org/) as testbenching framework.
 - [Questa advanced simulator](https://eda.sw.siemens.com/en-US/ic/questa/simulation/advanced-simulator/) as simulator. Opensource alternatives such as [GHDL](https://github.com/ghdl/ghdl) + [gtkwave](https://github.com/gtkwave/gtkwave) are also good options (they would require minor modifications in the test Makefile).
 
-## Usage <a name="Usage"></a>
+## Usage <a id="Usage"></a>
 
 **Testbenchs**:
 
@@ -50,7 +50,7 @@ See output/Makefile for more details about usage and parameters.
 
 Note that Zynq platforms require PS initialisation so that some resources available from the PL side (such as PLn clocks) work. The simplest option is to create a baremetal platfrom in Vitis from the xsa generated and load a simple application. 
 
-## Contact <a name="Contact"></a>
+## Contact <a id="Contact"></a>
 
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
