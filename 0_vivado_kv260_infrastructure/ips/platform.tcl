@@ -1,7 +1,7 @@
 ##############################################################################
 # Top block design to wrap ZUS+ block, reset, interrupts, user logic, etc.
 # 
-# It expects to be sources from within the folder that contains the Vivado project
+# It expects to be sourced from within the folder that contains the Vivado project
 ##############################################################################
 
 ##############################################################################
@@ -28,72 +28,45 @@ update_compile_order -fileset sources_1
 # Zynq Ultrscale+ MPSoC block (default preset)
 set zynq_ultra_ps [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.4 zynq_ultra_ps ]
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1" }  $zynq_ultra_ps
-set_property    CONFIG.PSU__USE__M_AXI_GP0 {0}                                  $zynq_ultra_ps
-set_property    CONFIG.PSU__USE__M_AXI_GP1 {0}                                  $zynq_ultra_ps
-set_property    CONFIG.PSU__USE__M_AXI_GP2 {0}                                  $zynq_ultra_ps
-set_property    CONFIG.PSU__USE__S_AXI_GP0 {0}                                  $zynq_ultra_ps
-set_property    CONFIG.PSU__USE__S_AXI_GP2 {0}                                  $zynq_ultra_ps
-set_property    CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ $PL0_CLK_FREQ_MHZ    $zynq_ultra_ps
-set_property    CONFIG.PSU__TTC0__PERIPHERAL__ENABLE {1}                        $zynq_ultra_ps
-set_property    CONFIG.PSU__TTC0__WAVEOUT__ENABLE {1}                           $zynq_ultra_ps
-set_property    CONFIG.PSU__TTC0__WAVEOUT__IO {EMIO}                            $zynq_ultra_ps
+set_property -dict [list \
+    CONFIG.PSU__USE__M_AXI_GP0 {0}                               \
+    CONFIG.PSU__USE__M_AXI_GP1 {0}                               \
+    CONFIG.PSU__USE__M_AXI_GP2 {0}                               \
+    CONFIG.PSU__USE__S_AXI_GP0 {0}                               \
+    CONFIG.PSU__USE__S_AXI_GP2 {0}                               \
+    CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ $PL0_CLK_FREQ_MHZ \
+    CONFIG.PSU__TTC0__PERIPHERAL__ENABLE {1}                     \
+    CONFIG.PSU__TTC0__WAVEOUT__ENABLE {1}                        \
+    CONFIG.PSU__TTC0__WAVEOUT__IO {EMIO}                         \
+] $zynq_ultra_ps
 
-set pl_clk0 [get_bd_pins $zynq_ultra_ps/pl_clk0]
-set pl_resetn0 [get_bd_pins $zynq_ultra_ps/pl_resetn0]
+##############################################################################
+# Reset blocks
+##############################################################################
 
-# Reset block
-set proc_sys_reset [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset ]
-connect_bd_net $pl_clk0 [get_bd_pins $proc_sys_reset/slowest_sync_clk]
-connect_bd_net $pl_resetn0 [get_bd_pins $proc_sys_reset/ext_reset_in]
-
-set peripheral_reset [get_bd_pins $proc_sys_reset/peripheral_reset]
+set ps_reset_pl0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 ps_reset_pl0 ]
 
 ##############################################################################
 # Fan control
 ##############################################################################
 
-if {[lsearch -exact $fan_control_type $FAN_CONTROL] == -1} {
-    puts "Error: FAN_CONTROL must be one of {ttc0_linux counter_fpga default}"
-    exit 1
-}
-
 if {$FAN_CONTROL eq "ttc0_linux"} {
-    
     # Fan control from PS TTC0 EMIO waveout
-
     # Add slice IP and configure to take bit 2 from a 3-bit wide input
     set xlslice_fan [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_fan ]
     set_property    CONFIG.DIN_TO {2}                       $xlslice_fan
     set_property    CONFIG.DIN_FROM {2}                     $xlslice_fan
     set_property    CONFIG.DIN_WIDTH {3}                    $xlslice_fan
     set_property    CONFIG.DOUT_WIDTH {1}                   $xlslice_fan
-
-    # Connect slice output to fan_en_b output port and slice input to ttc0 emio
-    create_bd_port -dir O -from 0 -to 0 fan_en_b
-    connect_bd_net [get_bd_pins /xlslice_fan/Dout] [get_bd_ports fan_en_b]
-    connect_bd_net [get_bd_pins $zynq_ultra_ps/emio_ttc0_wave_o] [get_bd_pins xlslice_fan/Din]
-
 } elseif {$FAN_CONTROL eq "counter_fpga"} {
-
     # Fan control from FPGA pwm module
-
     set pwm [ create_bd_cell -type module -reference pwm pwm_inst ]
-
-    connect_bd_net [get_bd_pins pwm_inst/clk_i]  [get_bd_pins $pl_clk0]
-    connect_bd_net [get_bd_pins pwm_inst/rst_i]  [get_bd_pins $peripheral_reset]
-
     # fan_en_b works with negative logic, for what a not gate is used
-    create_bd_port -dir O -from 0 -to 0 fan_en_b
     create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0
     set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] [get_bd_cells util_vector_logic_0]
-    connect_bd_net [get_bd_pins pwm_inst/pwm_o] [get_bd_pins util_vector_logic_0/Op1]
-    connect_bd_net [get_bd_ports fan_en_b]      [get_bd_pins util_vector_logic_0/Res]
-
     # duty_cycle_in driven by 7-bit constant set at 20 (duty cycle = 20%)
     create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0
     set_property -dict [list CONFIG.CONST_WIDTH {7} CONFIG.CONST_VAL {20}] [get_bd_cells xlconstant_0]
-    connect_bd_net [get_bd_pins xlconstant_0/dout] [get_bd_pins pwm_inst/duty_cycle_in]
-
 } elseif {[lsearch -exact $fan_control_type $FAN_CONTROL] == -1} {
     puts "Error: FAN_CONTROL must be one of {ttc0_linux counter_fpga default}"
     exit 1
@@ -105,10 +78,40 @@ if {$FAN_CONTROL eq "ttc0_linux"} {
 
 set counter_wrapper [ create_bd_cell -type module -reference counter_wrapper counter_wrapper_inst ]
 
+##############################################################################
+# Connections
+##############################################################################
+
+set pl_clk0 [get_bd_pins $zynq_ultra_ps/pl_clk0]
+set pl_resetn0 [get_bd_pins $zynq_ultra_ps/pl_resetn0]
+
+# ps_reset_pl0
+connect_bd_net $pl_clk0 [get_bd_pins $ps_reset_pl0/slowest_sync_clk]
+connect_bd_net $pl_resetn0 [get_bd_pins $ps_reset_pl0/ext_reset_in]
+set peripheral_reset [get_bd_pins $ps_reset_pl0/peripheral_reset]
+
+# counter_wrapper
 create_bd_port -dir O -from 7 -to 0 pmod
 connect_bd_net [get_bd_pins counter_wrapper_inst/clk_i]  [get_bd_pins $pl_clk0]
 connect_bd_net [get_bd_pins counter_wrapper_inst/rst_i]  [get_bd_pins $peripheral_reset]
 connect_bd_net [get_bd_pins counter_wrapper_inst/pmod_o] [get_bd_ports pmod] 
+
+# Fan control
+if {$FAN_CONTROL eq "ttc0_linux"} {
+    create_bd_port -dir O -from 0 -to 0 fan_en_b
+    connect_bd_net [get_bd_pins /xlslice_fan/Dout] [get_bd_ports fan_en_b]
+    connect_bd_net [get_bd_pins $zynq_ultra_ps/emio_ttc0_wave_o] [get_bd_pins xlslice_fan/Din]
+} elseif {$FAN_CONTROL eq "counter_fpga"} {
+    connect_bd_net [get_bd_pins pwm_inst/clk_i]  [get_bd_pins ps_reset_pl0/slowest_sync_clk]
+    connect_bd_net [get_bd_pins pwm_inst/rst_i]  [get_bd_pins ps_reset_pl0/peripheral_reset]
+    connect_bd_net [get_bd_pins pwm_inst/pwm_o] [get_bd_pins util_vector_logic_0/Op1]
+    create_bd_port -dir O -from 0 -to 0 fan_en_b
+    connect_bd_net [get_bd_ports fan_en_b]      [get_bd_pins util_vector_logic_0/Res]
+    connect_bd_net [get_bd_pins xlconstant_0/dout] [get_bd_pins pwm_inst/duty_cycle_in]
+} elseif {[lsearch -exact $fan_control_type $FAN_CONTROL] == -1} {
+    puts "Error: FAN_CONTROL must be one of {ttc0_linux counter_fpga default}"
+    exit 1
+}
 
 ##############################################################################
 # Regenerate layout and validate design
