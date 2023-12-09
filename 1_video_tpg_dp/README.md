@@ -3,12 +3,12 @@
 ## Table of contents
 <ol>
     <li><a href="#About-The-Project">About the project</a></li>
-    <li><a href="#References">References</a></li>
     <li><a href="#Theoretical-Understanding">Theoretical understanding</a></li>
     <li><a href="#Hardware-Design">Hardware Design</a></li>
     <li><a href="#Software-design">Software design</a></li>
     <li><a href="#Prerequisites">Prerequisites</a></li>
     <li><a href="#Usage">Usage</a></li>
+    <li><a href="#References">References</a></li>
     <li><a href="#Contact">Contact</a></li>
 </ol>
 
@@ -17,6 +17,8 @@
 The AMD KV260 Vision AI Starter Kit is a platform designed for applications targeting video, featuring 2 video outputs (HDMI 1.4 and DisplayPort 1.2a) and 3 MIPI sensor interfaces (2 IAS MIPI interface and 1 Raspberry Pi camera interface). The goal of this project is to get introduced to the video output interfaces in this platform and to achieve visual results on an external screen through a video stream controlled from the FPGA side. While a pre-built Ubuntu image is already set-up to output video from the Operating System, the motivation is to gain knowledge on configuring and controlling the video output at low level in order to leverage the KV260 FPGA capabilities.
 
 To simplify the process, the Video Test Pattern Generator (VTPG) IP is used to drive the video output.
+
+![Screen Output](pics/screen_output.gif)
 
 ## Theoretical understanding <a name="Theoretical-Understanding"></a>
 
@@ -68,9 +70,12 @@ The full block design configuration is scripted in ips/platform.tcl. However, it
 
 ## Software design <a name="Software-design"></a>
 
+In order to initialise, configure and run the video components (Video Test Pattern Generator (VTPG), Video Timing Controller (VTC) and DisplayPort Controller (DPPSU)), a standalone / baremetal application is built to run on the A53. It makes use under the hood of the psu_dpdma example provided by Xilinx to control the DisplayPort controller, which is based on the xdppsu DisplayPort standalone driver.
 
-
-@todo
+The source files are provided under sw/app_a53_standalone_config_video:
+- main.c: initialises the platform, configures the video components and enables them.
+- config.h: allows selecting the video mode used (must match the configuration used in the FPGA components including the pixel clock frequency).
+- xdpdma_video.h/c and xdppsu_interrupt.c: provides useful functions to configure the DisplayPort controller. 
 
 ## Prerequisites <a name="Prerequisites"></a>
 
@@ -83,6 +88,10 @@ The full block design configuration is scripted in ips/platform.tcl. However, it
 
 ## Usage <a name="Usage"></a>
 
+**Vivado Project: configuration**:
+
+Configure clk_wiz_0 clock 3 in ips/platform.tcl (or directly from Vivado IP integrator) so that the pixel clock frequency matches the requirements of the video mode used. By default it is set to 148.5 MHz (1080p @ 60Hz)
+
 **Vivado Project: build the project and generate bitstream and xsa platform file**:
 
 ```
@@ -94,10 +103,17 @@ make vivado # build the Vivado project and opens it from Vivado GUI
 
 See output/Makefile for more details about usage and parameters.
 
-**Vitis Project**
+**Vitis Project**:
 
-@todo
-
+- From Vitis IDE, build a platform project based on the xsa generated from the previous step.
+- On top of that platform, build a standalone application project for the A53 core based on HelloWorld template.
+- Import the sources from sw/app_a53_standalone_config_video to the application project.
+- Remove original HelloWorld.c
+- Modify `VIDEO_MODE_CONFIG` to match the video mode used.
+- Note: the original dpdma example of Xilinx can be generated from the platform as shown below, clicking "Import Examples":
+<img src="pics/vitis_dpdma_example.png" alt="bd_top">
+- Note: `xdpdma_video.c` includes some modifications with respect to the original example to select a video mode according to the value chosen in `config.h` and to select `XAVBUF_VIDSTREAM1_LIVE` in `XAVBuf_InputVideoSelect` function for enabling live input (from the FPGA) in the DP controller.
+- Compile all and upload the resulting binary into the KV260. As initialisation procedure, `psu_init` must be used instead of the standard FSBL flow to properly boot up.
 
 ## References <a name="References"></a>
 
