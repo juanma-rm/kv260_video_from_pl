@@ -21,7 +21,7 @@
 # General parameters
 #############################################################
 
-PROJECT_NAME = kv260_infrastructure
+PROJECT_NAME = video_tpg_dp
 # BD_TOP will be used by platform.tcl when building the top block design
 BD_TOP = bd_top
 FPGA_PART = XCK26-SFVC784-2LV-C
@@ -200,7 +200,7 @@ endif
 # Build a Vitis project
 vitis_proj: $(PROJECT_NAME).xsa
 	echo "platform create -name {$(PROJECT_NAME)} -hw {$(PROJECT_NAME).xsa} -proc {psu_cortexa53_0} -os {standalone} -arch {64-bit} -fsbl-target {psu_cortexa53_0} -out {vitis};platform write" > vitis_proj.tcl
-	echo "platform read {vitis/kv260_infrastructure/platform.spr}" >> vitis_proj.tcl
+	echo "platform read {vitis/$(PROJECT_NAME)/platform.spr}" >> vitis_proj.tcl
 	echo "platform active {$(PROJECT_NAME)}" >> vitis_proj.tcl
 
 
