@@ -1,8 +1,8 @@
 /*************************************************************************************
  * main.c
  *
- * Configures the video components (Video Test Pattern Generator, Video Timing Controller,
- * and DisplayPort Controller (DPPSU)) and runs them.
+ * Configures the video components (Video Timing Controller and DisplayPort Controller
+ * (DPPSU)) and runs them.
  * 
  * Makes use of the psu_dpdma example provided by Xilinx to control the DisplayPort controller
  * and based on the xdppsu DisplayPort standalone driver.
@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include "platform.h"
 #include "xil_printf.h"
-#include "xv_tpg.h"
 #include "xvtc.h"
 #include "xvidc.h"
 #include "xdpdma_video.h"
@@ -28,7 +27,6 @@
  * Global data
  *************************************************************************************/
 
-XV_tpg tpg;
 XVtc vtc;
 XVtc_Config *vtc_config;
 
@@ -40,7 +38,6 @@ XVtc_Config *vtc_config;
  * @brief Initialise the video driver components.
  */
 void driverInit() {
-	XV_tpg_Initialize(&tpg, 0);
 	vtc_config = XVtc_LookupConfig(XPAR_VTC_0_DEVICE_ID);
 	XVtc_CfgInitialize(&vtc, vtc_config, vtc_config->BaseAddress);
 }
@@ -92,34 +89,11 @@ int configDPPSU(void) {
 }
 
 /**
- * @brief
- */
-void configTPG(XVidC_VideoStream *StreamPtr) {
-    // Disable auto restart to configure the TPG settings
-    XV_tpg_DisableAutoRestart(&tpg);
-    // Set the height and width of the TPG based on the video stream parameters
-    XV_tpg_Set_height(&tpg, StreamPtr->Timing.VActive);
-    XV_tpg_Set_width(&tpg, StreamPtr->Timing.HActive);
-    // Set the color format to RGB
-    XV_tpg_Set_colorFormat(&tpg, XVIDC_CSF_RGB);
-    // Set the background pattern to color bars
-    XV_tpg_Set_bckgndId(&tpg, XTPG_BKGND_COLOR_BARS);
-    // Set overlay ID and other TPG parameters
-    XV_tpg_Set_ovrlayId(&tpg, 1);
-    XV_tpg_Set_boxSize(&tpg, 100);
-    XV_tpg_Set_motionSpeed(&tpg, 10);
-    // Enable auto restart to apply the configured settings
-    XV_tpg_EnableAutoRestart(&tpg);
-    // Start the TPG
-    XV_tpg_Start(&tpg);
-}
-
-/**
  * @brief Main function for initialising and configuring video processing components.
  *
  * This function initializes the platform, sets video stream and timing parameters, and configures
- * the Test Pattern Generator (TPG), Video Timing Controller (VTC), and other components. Finally,
- * it runs the display processor (DPPSU) and cleans up the platform before exiting.
+ * the Video Timing Controller (VTC), and other components. Finally, it runs the display processor 
+ * (DPPSU) and cleans up the platform before exiting.
  *
  * @return Returns 0 upon successful execution.
  */
@@ -132,9 +106,9 @@ int main() {
     // Set video stream and timing parameters
 	XVidC_VideoStream VidStream;
     XVidC_VideoTiming const *TimingPtr;
-	VidStream.PixPerClk = tpg.Config.PixPerClk;
+	VidStream.PixPerClk = 1;
 	VidStream.ColorFormatId = XVIDC_CSF_RGB;
-	VidStream.ColorDepth = tpg.Config.MaxDataWidth;
+	VidStream.ColorDepth = 24;
 	VidStream.VmId = VIDEO_MODE_CONFIG;
 	TimingPtr = XVidC_GetTimingInfo(VidStream.VmId);
 	VidStream.Timing = *TimingPtr;
@@ -143,7 +117,6 @@ int main() {
 
     // Initialise and configure Video components 
 	driverInit();
-	configTPG(&VidStream);
 	configVTC(&VidStream);
 	configDPPSU();
 
