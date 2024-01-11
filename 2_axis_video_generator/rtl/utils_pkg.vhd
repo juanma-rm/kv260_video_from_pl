@@ -15,8 +15,6 @@ use ieee.math_real.all;
 
 package utils_pkg is
 
-    constant DATA_WIDTH : integer := 32;
-
     pure function log2_ceil(i : positive) return natural; 
     pure function max(a : positive; b : positive) return positive;
 

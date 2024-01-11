@@ -27,7 +27,9 @@
  * Module declaration
 **********************************************************************************/
 
-module counter (
+module counter #( 
+    parameter DATA_WIDTH = 32
+)(
     input  wire                   clk_i  ,
     input  wire                   rst_i  ,
     output reg [DATA_WIDTH-1:0]   count_o
