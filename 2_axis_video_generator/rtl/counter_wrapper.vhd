@@ -26,7 +26,10 @@ use work.utils_pkg.all;
 ----------------------------------------------------------------------------------
 
 entity counter_wrapper is
-    Port (
+    generic (
+        DATA_WIDTH : integer := 32
+    );
+    port (
         clk_i   : in  std_logic;
         rst_i   : in  std_logic;
         pmod_o  : out std_logic_vector(7 downto 0)

@@ -26,7 +26,10 @@ use work.utils_pkg.all;
 ----------------------------------------------------------------------------------
 
 entity counter is
-    Port (
+    generic (
+        DATA_WIDTH : integer := 32
+    );
+    port (
         clk_i   : in  std_logic;
         rst_i   : in  std_logic;
         count_o : out std_logic_vector(DATA_WIDTH-1 downto 0)
