@@ -109,7 +109,7 @@ See output/Makefile for more details about usage and parameters.
 - On top of that platform, build a standalone application project for the A53 core based on HelloWorld template.
 - Import the sources from sw/app_a53_standalone_config_video to the application project.
 - Remove original HelloWorld.c
-- Modify `VIDEO_MODE_CONFIG` to match the video mode used.
+- Modify `VIDEO_MODE_CONFIG` in `config.h` to match the video mode used.
 - Note: the original dpdma example of Xilinx can be generated from the platform as shown below, clicking "Import Examples":
 <img src="pics/vitis_dpdma_example.png" alt="bd_top">
 - Note: `xdpdma_video.c` includes some modifications with respect to the original example to select a video mode according to the value chosen in `config.h` and to select `XAVBUF_VIDSTREAM1_LIVE` in `XAVBuf_InputVideoSelect` function for enabling live input (from the FPGA) in the DP controller.
