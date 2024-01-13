@@ -47,7 +47,7 @@ VERILOG_INCLUDE_DIRS	+= $(SRC_PATH)/utils.v
 
 # DUT parameters
 NUM_COLS            ?= 8
-NUM_ROWS            ?= 4
+NUM_ROWS            ?= 9
 NUM_COMPS_PER_PIXEL ?= 3
 AXIS_DATA_WIDTH     ?= 24
 
