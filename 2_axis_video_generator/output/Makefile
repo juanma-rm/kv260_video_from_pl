@@ -44,7 +44,9 @@ SRC_PATH 			= $(WORKSPACE_PATH)/rtl
 
 SRC_VHDL_FILES		+= $(SRC_PATH)/counter_wrapper.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
 SRC_VHDL_FILES		+= $(SRC_PATH)/pwm.vhd # Cannot be VHDL 2008 as it is instantiated directly from Vivado IP integrator
+SRC_VHDL_FILES		+= $(SRC_PATH)/axis_video_pattern_generator_wrapper.vhd
 SRC_VHDL08_FILES 	+= $(SRC_PATH)/utils_pkg.vhd
+SRC_VHDL08_FILES	+= $(SRC_PATH)/axis_video_pattern_generator.vhd
 SRC_VERILOG_FILES 	+= $(SRC_PATH)/counter.v
 INC_VERILOG_FILES	+= $(SRC_PATH)/utils.v
 
@@ -65,6 +67,7 @@ IP_TCL_FILES 		= $(WORKSPACE_PATH)/ips/platform.tcl
 
 # Note: all targets are executed from within VIVADO_OUT_PATH folder, where the Vivado project will be generated
 VIVADO_OUT_PATH := $(WORKSPACE_PATH)/output/vivado # Warning! This folder will be removed each time make clean is done; careful with making this variable point to any folder containing important data
+VITIS_OUT_PATH := $(WORKSPACE_PATH)/output/vitis # Warning! This folder will be removed each time make clean is done; careful with making this variable point to any folder containing important data
 
 all: xsa
 
@@ -85,6 +88,7 @@ program: create_path
 
 clean:
 	rm -rf $(VIVADO_OUT_PATH)
+	rm -rf $(VITIS_OUT_PATH)
 
 .PHONY: all vivado bit clean
 

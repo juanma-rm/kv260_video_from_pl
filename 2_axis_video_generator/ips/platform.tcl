@@ -100,7 +100,7 @@ set xlconcat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconc
 
 set axi_interc_hpm0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_interc_hpm0 ]
 set_property -dict [ list \
-    CONFIG.NUM_MI {2} \
+    CONFIG.NUM_MI {1} \
 ] $axi_interc_hpm0
 
 ##############################################################################
@@ -136,15 +136,15 @@ if {$FAN_CONTROL eq "ttc0_linux"} {
 set counter_wrapper [ create_bd_cell -type module -reference counter_wrapper counter_wrapper_inst ]
 
 ##############################################################################
-# Video control: Video TPG + Video Timing Controller + AXI4S to Video Out
+# Video control: video generator + Video Timing Controller + AXI4S to Video Out
 ##############################################################################
 
-# Video TPG
-set v_tpg_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:v_tpg:8.2 v_tpg_0 ]
+# Video generator
+set axis_video_gen_wrapper_inst [ create_bd_cell -type module -reference axis_video_pattern_generator_wrapper axis_video_gen_wrapper_inst ]
 set_property -dict [ list \
-    CONFIG.MAX_COLS {4096} \
-    CONFIG.MAX_ROWS {2160} \
-] $v_tpg_0
+    CONFIG.NUM_COLS {1920} \
+    CONFIG.NUM_ROWS {1080} \
+] $axis_video_gen_wrapper_inst
 
 # Video Timing Controller
 set v_tc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:v_tc:6.2 v_tc_0 ]
@@ -191,7 +191,7 @@ set pl_resetn0 [get_bd_pins $zynq_ultra_ps/pl_resetn0]
 connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins clk_wiz_0/clk_in1] $pl_clk0
 connect_bd_net -net clk_wiz_0_clk_100M [get_bd_pins clk_wiz_0/clk_100M] [get_bd_pins axi_interc_hpm0/ACLK] [get_bd_pins axi_interc_hpm0/M00_ACLK] [get_bd_pins axi_interc_hpm0/S00_ACLK] [get_bd_pins ps_reset_100M/slowest_sync_clk] [get_bd_pins v_tc_0/s_axi_aclk] [get_bd_pins zynq_ultra_ps/maxihpm0_fpd_aclk]
 connect_bd_net -net clk_wiz_0_clk_148_5M [get_bd_pins clk_wiz_0/clk_148_5M] [get_bd_pins system_ila_0/clk] [get_bd_pins v_axi4s_vid_out_0/vid_io_out_clk] [get_bd_pins v_tc_0/clk] [get_bd_pins zynq_ultra_ps/dp_video_in_clk]
-connect_bd_net -net clk_wiz_0_clk_300M [get_bd_pins clk_wiz_0/clk_300M] [get_bd_pins axi_interc_hpm0/M01_ACLK] [get_bd_pins ps_reset_300M/slowest_sync_clk] [get_bd_pins system_ila_1/clk] [get_bd_pins v_axi4s_vid_out_0/aclk] [get_bd_pins v_tpg_0/ap_clk]
+connect_bd_net -net clk_wiz_0_clk_300M [get_bd_pins clk_wiz_0/clk_300M] [get_bd_pins axi_interc_hpm0/M01_ACLK] [get_bd_pins ps_reset_300M/slowest_sync_clk] [get_bd_pins system_ila_1/clk] [get_bd_pins v_axi4s_vid_out_0/aclk] [get_bd_pins axis_video_gen_wrapper_inst/clk_i]
 
 # ps_reset_100M
 connect_bd_net $pl_resetn0 [get_bd_pins ps_reset_100M/ext_reset_in]
@@ -199,20 +199,21 @@ connect_bd_net -net ps_reset_100M_peripheral_aresetn [get_bd_pins ps_reset_100M/
 
 # ps_reset_300M
 connect_bd_net $pl_resetn0 [get_bd_pins ps_reset_300M/ext_reset_in]
-connect_bd_net -net ps_reset_300M_peripheral_aresetn [get_bd_pins ps_reset_300M/peripheral_aresetn] [get_bd_pins axi_interc_hpm0/M01_ARESETN] [get_bd_pins v_axi4s_vid_out_0/aresetn] [get_bd_pins v_tpg_0/ap_rst_n]
+connect_bd_net -net ps_reset_300M_peripheral_aresetn [get_bd_pins ps_reset_300M/peripheral_aresetn] [get_bd_pins axi_interc_hpm0/M01_ARESETN] [get_bd_pins v_axi4s_vid_out_0/aresetn]
+connect_bd_net -net ps_reset_300M_peripheral_reset [get_bd_pins ps_reset_300M/peripheral_reset] [get_bd_pins axis_video_gen_wrapper_inst/rst_i]
 
 # Interrupts
 connect_bd_net -net xlconcat_0_dout [get_bd_pins xlconcat_0/dout] [get_bd_pins zynq_ultra_ps/pl_ps_irq0]
-connect_bd_net -net v_tpg_0_interrupt [get_bd_pins xlconcat_0/In0] [get_bd_pins v_tpg_0/interrupt]
-connect_bd_net -net v_tc_0_irq [get_bd_pins v_tc_0/irq] [get_bd_pins xlconcat_0/In1]
+connect_bd_net -net v_tc_0_irq [get_bd_pins v_tc_0/irq] [get_bd_pins xlconcat_0/In0]
 
 # axi_interc_hpm0
 connect_bd_intf_net -intf_net zynq_ultra_ps_M_AXI_HPM0_FPD [get_bd_intf_pins axi_interc_hpm0/S00_AXI] [get_bd_intf_pins zynq_ultra_ps/M_AXI_HPM0_FPD]
 connect_bd_intf_net -intf_net axi_interc_hpm0_M00_AXI [get_bd_intf_pins axi_interc_hpm0/M00_AXI] [get_bd_intf_pins v_tc_0/ctrl]
-connect_bd_intf_net -intf_net axi_interc_hpm0_M01_AXI [get_bd_intf_pins axi_interc_hpm0/M01_AXI] [get_bd_intf_pins v_tpg_0/s_axi_CTRL]
 
-# Video TPG
-connect_bd_intf_net -intf_net v_tpg_0_m_axis_video [get_bd_intf_pins v_tpg_0/m_axis_video] [get_bd_intf_pins v_axi4s_vid_out_0/video_in] 
+# Video generator
+connect_bd_intf_net -intf_net axis_video_gen_wrapper_m_axis_video [get_bd_intf_pins axis_video_gen_wrapper_inst/m_axis_video] [get_bd_intf_pins v_axi4s_vid_out_0/video_in] 
+# Avoid Vivado from complaining when connecting axis interfaces
+set_property CONFIG.FREQ_HZ 297497025 [get_bd_intf_pins /axis_video_gen_wrapper_inst/m_axis_video]
 
 # Video Timing Controller
 connect_bd_intf_net -intf_net v_tc_0_vtiming_out [get_bd_intf_pins v_tc_0/vtiming_out] [get_bd_intf_pins v_axi4s_vid_out_0/vtiming_in]
@@ -253,7 +254,6 @@ if {$FAN_CONTROL eq "ttc0_linux"} {
 ##############################################################################
 
 assign_bd_address -offset 0xA0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps/Data] [get_bd_addr_segs v_tc_0/ctrl/Reg] -force
-assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps/Data] [get_bd_addr_segs v_tpg_0/s_axi_CTRL/Reg] -force
 
 ##############################################################################
 # Regenerate layout and validate design
