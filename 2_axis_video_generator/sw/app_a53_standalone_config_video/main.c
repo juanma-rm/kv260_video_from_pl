@@ -106,9 +106,7 @@ int main() {
     // Set video stream and timing parameters
 	XVidC_VideoStream VidStream;
     XVidC_VideoTiming const *TimingPtr;
-	VidStream.PixPerClk = 1;
 	VidStream.ColorFormatId = XVIDC_CSF_RGB;
-	VidStream.ColorDepth = 24;
 	VidStream.VmId = VIDEO_MODE_CONFIG;
 	TimingPtr = XVidC_GetTimingInfo(VidStream.VmId);
 	VidStream.Timing = *TimingPtr;
