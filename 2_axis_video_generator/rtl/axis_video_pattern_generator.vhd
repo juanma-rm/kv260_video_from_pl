@@ -62,7 +62,12 @@ architecture behavioral of axis_video_pattern_generator is
     constant COLOUR_BLUE  : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0) := x"FF" & x"00" & x"00";
     constant COLOUR_RED   : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0) := x"00" & x"FF" & x"00";
     constant COLOUR_GREEN : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0) := x"00" & x"00" & x"FF";
+    constant COLOUR_BLACK : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0) := x"00" & x"00" & x"00";
+    constant COLOUR_WHITE : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0) := x"FF" & x"FF" & x"FF";
     signal pixel_current : std_logic_vector(AXIS_DATA_WIDTH-1 downto 0);
+
+    signal vertical_bar_posX : unsigned(log2_ceil(NUM_COLS)-1 downto 0);
+    constant VERTICAL_BAR_WIDTH : positive := 5;
 
 begin
 
@@ -108,15 +113,31 @@ begin
         end if;
     end process; 
 
+    -- Handle vertical bar position
+    process(clk_i)
+    begin
+        if rising_edge(clk_i) then
+            if rst_i = '1' then
+                vertical_bar_posX <= (others => '0');  -- Reset the counter to 0 at reset
+            elsif (m_axis_consumed = '1' and eof = '1') then
+                vertical_bar_posX <= vertical_bar_posX + 1;  -- Increment by one column after each frame
+            end if;
+        end if;
+    end process; 
+
     -- Control pixel value
     process(all)
     begin
-        if count_row_reg < to_unsigned(NUM_ROWS*1/3, count_row_reg'length) then
+        if (count_col_reg >= vertical_bar_posX and count_col_reg < vertical_bar_posX + VERTICAL_BAR_WIDTH) then
+            pixel_current <= COLOUR_BLACK;
+        elsif count_row_reg < to_unsigned(NUM_ROWS*1/3, count_row_reg'length) then
             pixel_current <= COLOUR_RED;
         elsif count_row_reg < to_unsigned(NUM_ROWS*2/3, count_row_reg'length) then
             pixel_current <= COLOUR_GREEN;
         elsif count_row_reg < to_unsigned(NUM_ROWS*3/3, count_row_reg'length) then
             pixel_current <= COLOUR_BLUE;
+        else
+            pixel_current <= COLOUR_WHITE;
         end if;
     end process;
 
