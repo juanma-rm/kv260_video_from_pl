@@ -52,8 +52,10 @@ end axis_video_pattern_generator;
 architecture behavioral of axis_video_pattern_generator is
 
     signal m_axis_consumed : std_logic;
-    signal count_col_reg : unsigned(log2_ceil(NUM_COLS) downto 0);
-    signal count_row_reg : unsigned(log2_ceil(NUM_ROWS) downto 0);
+    signal count_col_reg   : unsigned(log2_ceil(NUM_COLS)-1 downto 0);
+    signal count_row_reg   : unsigned(log2_ceil(NUM_ROWS)-1 downto 0);
+    constant COUNT_FRAME_MAX : positive := 64*1024;
+    signal count_frame_reg : unsigned(log2_ceil(COUNT_FRAME_MAX)-1 downto 0);
     signal eol : std_logic;
     signal eof : std_logic;
 
@@ -93,6 +95,18 @@ begin
             end if;
         end if;
     end process;
+
+    -- Count frames
+    process(clk_i)
+    begin
+        if rising_edge(clk_i) then
+            if rst_i = '1' then
+                count_frame_reg <= (others => '0');  -- Reset the counter to 0 at reset
+            elsif (m_axis_consumed = '1' and eof = '1') then
+                count_frame_reg <= count_frame_reg + 1;  -- Increment the counter after current frame
+            end if;
+        end if;
+    end process; 
 
     -- Control pixel value
     process(all)

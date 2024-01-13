@@ -66,7 +66,7 @@ async def run_test_axis_video_pattern_generator(dut):
     tb.dut.m_axis_video_tready.value = 1
     
     # Leave some extra time to make visual simulation look better
-    for _ in range(50): await RisingEdge(dut.clk_i)
+    for _ in range(400): await RisingEdge(dut.clk_i)
     
 ###################################################################################
 # cocotb-test flow (alternative to Makefile flow)
