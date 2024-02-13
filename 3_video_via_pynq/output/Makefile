@@ -28,7 +28,7 @@ FPGA_PART = XCK26-SFVC784-2LV-C
 BOARD_PART = xilinx.com:kv260_som:part0:1.3
 BOARD_CONNECTIONS = "som240_1_connector xilinx.com:kv260_carrier:som240_1_connector:1.3"
 SYN_NUM_JOBS = 12
-# EXTENSIBLE_PLATFORM = true for extensible platform or false for standard platform (including bitstream, for baremetal workflow with Vitis)
+# EXTENSIBLE_PLATFORM = true for extensible platform (extensible xsa to integrate kernels on top of the platform) or false for standard platform (xsa including fixed bitstream, for baremetal workflow with Vitis)
 EXTENSIBLE_PLATFORM = false
 
 MAKEFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
